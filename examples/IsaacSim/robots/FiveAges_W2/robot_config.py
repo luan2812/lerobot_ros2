@@ -50,8 +50,10 @@ class RobotConfig:
                 pose_position_threshold=self.pose_position_threshold,
                 pose_orientation_threshold=self.pose_orientation_threshold,
                 #body_joint_controller_topic="/body_joint_controller/target_joint_position",
+                # 强制启用 Nav2，避免在当前环境中因为 controller_server 自动检测失败而禁用导航。
+                nav_enabled=True,
             ))
-    base_link_entity_path: str = "/World/FiveAges_W2/LinkHou_S2/base_footprint/base_link"
+    base_link_entity_path: str = "/World/robot/FiveAges_W2/LinkHou_S2/base_footprint/base_link"
     fsm_switch_delay: float = 0.1
     post_reset_wait: float = 1.0
     arrival_timeout: float = 8.0

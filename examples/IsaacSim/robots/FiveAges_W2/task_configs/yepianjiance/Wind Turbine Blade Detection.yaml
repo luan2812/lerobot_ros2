@@ -1,0 +1,221 @@
+# FiveAges W2 — 导航到箱体附近后双臂拿起叶片返回工作台（navigate_and_pick + bimanual_carry 拼合）
+#
+# 合并顺序：base → single_arm.pick（供 nav 默认物体路径）→ dual_arm.carry → 场景 skill_params
+# 队列：并行「导航 + navigate_gesture」→ pre_ocs2_* → carry →
+#   navigate_backup(0.5m) → 并行「send_nav_goal(0,0) + 降腰 MoveJ」→ wait_nav_arrived → 双臂回队列起势位姿
+
+# 任务标识，用于调度系统识别该任务类型
+task_key: Wind Turbine Blade Detection
+# 任务显示名称，可用于记录和界面展示
+label: 叶片检测
+# 是否使用时间戳参数进行任务同步与调度
+use_stamped: true
+# 默认场景名称，指定该任务使用的场景预设
+default_scene: box01
+
+runtime_defaults:
+  # 机器人基座实体路径，必须与当前 IsaacSim 场景中实际加载的机器人 prim 对齐
+  base_link_entity_path: /World/robot/FiveAges_W2/LinkHou_S2/base_footprint/base_link
+  # 每个阶段最大的允许执行时长，超过后会判定失败或超时终止
+  max_stage_duration: 2.0
+  # 任务执行中的位置容差，单位米，控制机器人到位精度
+  pose_tol_pos: 0.01 
+  # 任务执行中的姿态容差，单位弧度，控制方向/朝向精度
+  pose_tol_ori: 0.08
+
+task_queue:
+  # 并行阶段：导航到目标箱体位置，同时把双臂摆到导航预备姿态
+  - parallel:
+      - skill: nav.navigate_to_object
+        id: nav_to_carry
+      - skill: joint.movej_to_config
+        id: navigate_gesture
+  # 进入 OCS2 前的整体关节姿态准备
+  - skill: joint.movej_to_config
+    id: pre_ocs2_carry_arms
+  # 执行双臂搬运动作
+  - skill: dual_arm.carry
+  # 搬运后先后退一段距离，避免与箱体或起始区域冲突
+  - skill: nav.navigate_relative
+    id: pre_shelf_backup
+  # 并行阶段：导航到放置货架位置，同时躯干降低并进行双臂对齐
+  - parallel:
+      - skill: nav.navigate_to_object
+        id: nav_to_shelf2
+      - skill: joint.movej_to_config
+        id: lower_body_while_nav_to_shelf2
+      - skill: dual_arm.bimanual_align
+  # 仅身体调整到放置准备位，保持双臂状态稳定
+  - skill: joint.movej_to_config
+    id: pre_place_body_only
+  # 执行双臂放置动作
+  - skill: dual_arm.place
+  # 并行阶段：放置后后退，同时恢复到放置后导航姿态
+  - parallel:
+      - skill: nav.navigate_relative
+        id: post_carry_backup
+      - skill: joint.movej_to_config
+        id: post_place_navigate_gesture
+
+skill_defaults:
+  nav_to_carry:
+    # 目标物体在场景中的路径，用于导航定位和接近目标
+    object_prim_path: /World/scene/boxes/white_box_05/box
+
+    # 从当前机器人姿态到目标前方的 X 轴偏移，正值表示目标前方 0.95m
+    approach_offset_x: 0.95
+    # 从当前机器人姿态到目标侧面的 Y 轴偏移，控制靠近的横向位置
+    approach_offset_y: 0.02
+    # 导航到目标后朝向角，弧度制
+    yaw: 3.14
+    # 目标位姿所在坐标系，通常使用 map 表示全局坐标系
+    frame_id: map
+    # 导航到目标的超时时间，单位秒
+    timeout: 60.0
+
+  # 导航并行段：一边移动基座到目标附近，一边把双臂摆到导航手势姿态
+  navigate_gesture:
+    # 躯干的关节目标位置列表，用于调节机器人重心和姿态
+    body_positions:      [-1.3, -2.6, -1.3, 0.0]
+    # 左臂的关节目标位置，单位为弧度
+    left_arm_positions:  [-0.55, 1.0266, 0.8165, -1.8487, -0.9908, -0.5437, -0.4515]
+    # 右臂的关节目标位置，单位为弧度
+    right_arm_positions: [0.55, 1.0266, -0.8165, -1.8487, 0.9908, -0.5437, 0.4515]
+    # 到达目标姿态的最大等待时间，单位秒
+    arrival_timeout: 30.0
+    # 关节位置可接受的容差，单位弧度
+    joint_tolerance: 0.05
+
+  # 导航结束后，躯干与双臂一次到位并切换到 OCS2 控制，准备进入双臂笛卡尔抓取阶段
+  pre_ocs2_carry_arms:
+    # 躯干姿态角度，用于进入拾取准备位
+    body_positions: [-0.0035, 0.0073, 0.0027, 0.0]
+    # 左臂关节姿态，用于保证抓取前双臂位置一致性
+    left_arm_positions: [ 0.0138, 0.3641, 0.1272, -2.0973, -1.5775, 0.021, 0.0002 ]
+    # 右臂关节姿态，用于保证抓取前双臂位置一致性
+    right_arm_positions: [ -0.0126, 0.3851, -0.1182, -2.0973, 1.585, -0.0087, 0.0 ]
+    # 等待到位的最大时间
+    arrival_timeout: 30.0
+    # 关节到位容差
+    joint_tolerance: 0.05
+    # 切换回 OCS2 控制，以便后续笛卡尔双臂动作
+    resume_ocs2: true
+
+  dual_arm.carry:
+    # 目标物体路径，双臂搬运时使用相同的物体定位
+    object_prim_path: /World/scene/wind_turbo_blade/turbo_blade
+    # 双臂在目标物体侧边的半宽度，决定左右臂抓取间距
+    object_dual_arm_half_span_y: 0.29
+    # 在进入搬运前，双臂末端相对于目标物体的准备位偏移
+    carry_prepare_offset: [ 0.0, 0.00, 0.03]
+    # 双臂合拢时允许的 Y 轴间距阈值，用于判断是否进入抓取阶段
+    arm_merge_distance_y: 0.08
+    # 物体抓取完成后在目标物体坐标系中的位置偏移，用于调整抓取点
+    object_position_offset: [ 0.0, 0.0, 0.15]
+    # 左手末端基座姿态四元数，指定抓取时手部朝向
+    left_base_orientation: [ -0.5, 0.5, -0.5, 0.5 ]
+    # 右手末端基座姿态四元数，指定抓取时手部朝向
+    right_base_orientation: [ -0.5, 0.5, -0.5, 0.5 ]
+    # 抓取后末端执行器向上抬升的偏移距离
+    ee_lift_offset: [ 0.0, -0.15, 0.0 ]
+    # 放置后末端执行器撤离的偏移距离
+    ee_retreat_offset: [ 0.0, 0.0, -0.2 ]
+
+  pre_shelf_backup:
+    # 目标相对位移，在 map 坐标系下后退 0.5m
+    relative_position: [-0.5, 0.0, 0.0]
+    # 目标位姿所在坐标系
+    frame_id: map
+    # 导航超时时间
+    timeout: 5.0
+
+  nav_to_shelf2:
+    # 目标货架位置在场景中的路径
+    object_prim_path: /World/scene/bg_1/collision/Cube
+
+    # 目标前方 X 轴偏移，负值表示靠近目标背面方向
+    approach_offset_x: -0.95
+    # 目标侧向 Y 轴偏移，用于调整靠近货架的横向距离
+    approach_offset_y: 1.0
+    # 导航到目标后的朝向，弧度制
+    yaw: 0.0
+    # 使用全局地图坐标系
+    frame_id: map
+    # 导航超时时间
+    timeout: 40.0
+
+  lower_body_while_nav_to_shelf2:
+    # 在前往货架时保持躯干预备姿态，便于后续放置动作
+    body_positions: [-0.0035, 0.0073, 0.0027, 0.0]
+    # 不切换 FSM 状态，仅执行关节动作调整
+    skip_fsm_change: true
+    # 到位最大等待时间
+    arrival_timeout: 90.0
+    # 关节位置容差
+    joint_tolerance: 0.05
+
+  dual_arm.bimanual_align:
+    # 双臂对齐位置，相对于 arm_base 坐标系
+    align_position: [ 0.55, 0.0, 0.0 ]
+    # 对齐动作使用的运动参考坐标系
+    motion_frame_id: "arm_base"
+
+  pre_place_body_only:
+    # 仅调整躯干到放置准备位，保留当前双臂动作状态
+    body_positions: [-0.0035, 0.0073, 0.0027, 0.0]
+    # 不切换 FSM 状态，保持当前动作语义
+    skip_fsm_change: true
+    # 到位最大等待时间
+    arrival_timeout: 30.0
+    # 关节位置容差
+    joint_tolerance: 0.05
+    # 进入 OCS2 控制状态，以保证放置阶段的笛卡尔控制
+    resume_ocs2: true
+
+  dual_arm.place:
+    # 放置参考对象在场景中的路径，用于计算放置位姿
+    reference_object_prim_path: /World/scene/bg_1/collision/Cube
+    # 相对于参考对象的放置位置偏移，用于调整放置最终点
+    object_position_offset: [-1.0, -0.2, 0.135]
+    # 放置过程使用的运动参考坐标系
+    motion_frame_id: "arm_base"
+    # 放置完成后执行的撤离位移，避免末端与货架发生碰撞
+    retreat_xyz: [-0.3, 0.0, -0.1]
+
+  post_carry_backup:
+    # 放置后再次后退 0.5m，增加与货架的安全距离
+    relative_position: [-0.5, 0.0, 0.0]
+    # 目标位姿所在坐标系
+    frame_id: map
+    # 后退移动超时时间
+    timeout: 5.0
+
+  post_place_navigate_gesture:
+    # 放置完成后恢复到导航手势姿态，保持双臂准备状态
+    body_positions:      [-1.3, -2.6, -1.3, 0.0]
+    left_arm_positions:  [-0.55, 1.0266, 0.8165, -1.8487, -0.9908, -0.5437, -0.4515]
+    right_arm_positions: [0.55, 1.0266, -0.8165, -1.8487, 0.9908, -0.5437, 0.4515]
+    arrival_timeout: 30.0
+    joint_tolerance: 0.05
+
+scene_presets:
+  box01:
+    skill_params:
+      dual_arm.carry:
+        object_prim_path: /World/scene/wind_turbo_blade/turbo_blade
+
+
+record:
+  base_record_overrides:
+    task_name: navigate_and_carry
+    fps: 30
+    camera_info_timeout: 10.0
+    enable_keypoint_pcd: false
+    include_depth_feature: false
+    image_writer_processes: 0
+    image_writer_threads: 8
+    video_encoding_batch_size: 5
+  profiles:
+    - key: default
+      label: Default
+      overrides: {}

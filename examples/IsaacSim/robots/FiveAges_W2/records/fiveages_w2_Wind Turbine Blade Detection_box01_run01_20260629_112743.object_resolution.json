@@ -1,0 +1,30 @@
+{
+  "records": [
+    {
+      "task_key": "Wind Turbine Blade Detection",
+      "scene": "box01",
+      "block_key": "nav_to_carry",
+      "skill": "nav.navigate_to_object",
+      "block_index": 0,
+      "parallel_index": 0,
+      "arm_side": "none",
+      "object_role": "nav_target",
+      "object_prim_path": "/World/scene/boxes/white_box_05/box",
+      "include_orientation": true,
+      "frame_id": "map",
+      "pose": {
+        "position": {
+          "x": -0.5345486402511597,
+          "y": 0.7850194573402405,
+          "z": 0.5781359672546387
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "w": 1.0
+        }
+      }
+    }
+  ]
+}
