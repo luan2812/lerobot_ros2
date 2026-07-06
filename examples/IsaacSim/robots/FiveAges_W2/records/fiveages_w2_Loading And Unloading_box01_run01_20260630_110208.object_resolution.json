@@ -1,0 +1,30 @@
+{
+  "records": [
+    {
+      "task_key": "Loading And Unloading",
+      "scene": "box01",
+      "block_key": "nav_to_carry",
+      "skill": "nav.navigate_to_object",
+      "block_index": 0,
+      "parallel_index": 0,
+      "arm_side": "none",
+      "object_role": "nav_target",
+      "object_prim_path": "/root/fanzhuanliaocang/banjian_3/banjian_3",
+      "include_orientation": true,
+      "frame_id": "map",
+      "pose": {
+        "position": {
+          "x": -3.1291816234588623,
+          "y": 0.22082749009132385,
+          "z": 0.8839383125305176
+        },
+        "orientation": {
+          "x": 0.5,
+          "y": 0.5,
+          "z": 0.5,
+          "w": 0.5
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,330 @@
+# FiveAges W2 — 导航到箱体附近后双臂拿起叶片返回工作台（navigate_and_pick + bimanual_carry 拼合）
+#
+# 合并顺序：base → single_arm.pick（供 nav 默认物体路径）→ dual_arm.carry → 场景 skill_params
+# 队列：并行「导航 + navigate_gesture」→ pre_ocs2_* → carry →
+#   navigate_backup(0.5m) → 并行「send_nav_goal(0,0) + 降腰 MoveJ」→ wait_nav_arrived → 双臂回队列起势位姿
+
+# 任务标识，用于调度系统识别该任务类型
+task_key: Loading And Unloading
+# 任务显示名称，可用于记录和界面展示
+label: 焊接上下件
+# 是否使用时间戳参数进行任务同步与调度
+use_stamped: true
+# 默认场景名称，指定该任务使用的场景预设
+default_scene: env_1
+
+
+
+
+runtime_defaults:
+  # 机器人基座实体路径，必须与当前 IsaacSim 场景中实际加载的机器人 prim 对齐
+  base_link_entity_path: /World/robot/FiveAges_W2/LinkHou_S2/base_footprint/base_link
+  # 每个阶段最大的允许执行时长，超过后会判定失败或超时终止
+  max_stage_duration: 2.0
+  # 任务执行中的位置容差，单位米，控制机器人到位精度
+  pose_tol_pos: 0.01 
+  # 任务执行中的姿态容差，单位弧度，控制方向/朝向精度
+  pose_tol_ori: 0.08
+
+
+skill_defaults:
+  # 回home姿态
+  home_pose:
+    # joint.movej_to_config
+    body_positions: [-0.8992, -1.7143, -0.8651, 0.0]
+    left_arm_positions: [0.3810, 0.9665, 0.8517, -2.3582, -0.8916, -1.0037, -0.3983]
+    right_arm_positions: [-0.3809, 0.9665, -0.8518, -2.3582, 0.8914, -1.0037, 0.3983]
+    arrival_timeout: 30.0
+    joint_tolerance: 0.05
+    # body_movej_duration: 4.0
+
+  nav_to_carry_1:
+    # 目标物体在场景中的路径，用于导航定位和接近目标
+    object_prim_path: /World/scene/banjian_3/banjian_3
+    # 从当前机器人姿态到目标前方的 X 轴偏移，正值表示目标前方 0.95m
+    approach_offset_x: 0.85
+    # 从当前机器人姿态到目标侧面的 Y 轴偏移，控制靠近的横向位置
+    approach_offset_y: 0.15
+    # 导航到目标后朝向角，弧度制
+    yaw: 3.14
+    # 目标位姿所在坐标系，通常使用 map 表示全局坐标系
+    frame_id: map
+    # 导航到目标的超时时间，单位秒
+    timeout: 60.0
+  
+  
+# 左臂抓取预备姿态
+  left_pose_1_1:
+    # joint.movej_to_config
+    body_positions: [-0.75, -1.5, -0.75, 0.0]
+    left_arm_positions: [-1.3246, 0.8874, 1.6731, -2.2037, -0.6194, 0.1452, 0.1452]
+    right_arm_positions: [-0.3809, 0.9665, -0.8518, -2.3582, 0.8914, -1.0037, 0.3983]
+    arrival_timeout: 30.0
+    joint_tolerance: 0.05
+    gripper: 1.0
+
+  # 左臂抓取预备姿态
+  # left_pose_1:    #(测试)
+  #   # joint.movej_to_config
+  #   body_positions: [-0.9523, -1.8785, -0.9523, 0.0]
+  #   left_arm_positions: [-3.0157, 1.2793, 2.7614, -0.8667, -2.7194, -0.5073, 1.3342]
+  #   right_arm_positions: [-0.3809, 0.9665, -0.8518, -2.3582, 0.8914, -1.0037, 0.3983]
+  #   arrival_timeout: 30.0
+  #   joint_tolerance: 0.05
+  left_pose_1:
+    # joint.movej_to_config
+    body_positions: [-0.75, -1.5, -0.75, 0.0]
+    left_arm_positions: [-2.6549, 1.4138, 2.32, -0.8115, -2.2245, -0.3829, 1.276]
+    right_arm_positions: [-0.3809, 0.9665, -0.8518, -2.3582, 0.8914, -1.0037, 0.3983]
+    arrival_timeout: 30.0
+    joint_tolerance: 0.05
+    gripper: 100.0
+
+  # 左臂拿料
+  left_pose_2:
+    # joint.movej_to_config
+    body_positions: [-0.93, -1.86, -0.93, 0.0]
+    left_arm_positions: [-2.6549, 1.4138, 2.32, -0.8115, -2.2245, -0.3829, 1.276]
+    right_arm_positions: [-0.3809, 0.9665, -0.8518, -2.3582, 0.8914, -1.0037, 0.3983]
+    arrival_timeout: 30.0
+    joint_tolerance: 0.05
+    
+  # left_pick_1:    #（测试）
+  #   arm: left
+  #   motion_frame_id: arm_base
+  #   arm_movel_duration: 2.0
+  #   object_prim_path: /World/scene/banjian_3/banjian_3/banjian_3
+  #   object_position_offset: [-0.0, -0.1, 0.1]
+  #   ee_base_orientation: [0.694085, 0.687948, 0.1559, 0.14376]
+
+
+  # 左臂拿料出仓
+  left_pose_3:
+    # joint.movej_to_config
+    body_positions: [-0.465, -0.9699, -0.494, 0.0]
+    left_arm_positions: [-2.6549, 1.4138, 2.32, -0.8115, -2.2245, -0.3829, 1.276]
+    right_arm_positions: [-0.3809, 0.9665, -0.8518, -2.3582, 0.8914, -1.0037, 0.3983]
+    arrival_timeout: 30.0
+    joint_tolerance: 0.05
+    
+
+  nav_to_carry_2:
+    # 目标物体在场景中的路径，用于导航定位和接近目标
+    object_prim_path: /World/scene/bg_1/bg/A10_6212420_6211320_翻转料架_/____58_18/Mesh_2314
+    # 从当前机器人姿态到目标前方的 X 轴偏移，正值表示目标前方 0.95m
+    approach_offset_x: 2
+    # 从当前机器人姿态到目标侧面的 Y 轴偏移，控制靠近的横向位置
+    approach_offset_y: 0.2
+    # 导航到目标后朝向角，弧度制
+    yaw: 3.14
+    # 目标位姿所在坐标系，通常使用 map 表示全局坐标系
+    frame_id: map
+    # 导航到目标的超时时间，单位秒
+    timeout: 60.0
+
+# 左臂拿料,上料姿态
+  left_pose_4:
+    # joint.movej_to_config
+    body_positions: [-0.465, -0.9699, -0.494, 0.0]
+    left_arm_positions: [-2.4806, 1.5124, 2.4981, -1.1256, -2.3679, 0.6683, 1.1058]
+    right_arm_positions: [-0.3809, 0.9665, -0.8518, -2.3582, 0.8914, -1.0037, 0.3983]
+    arrival_timeout: 30.0
+    joint_tolerance: 0.05
+
+# 左臂拿料,切右臂拿料
+  left_pose_5:
+    # joint.movej_to_config
+    body_positions: [-0.465, -0.9699, -0.494, 0.0]
+    left_arm_positions: [-1.7757, 0.8048, 2.4085, -1.3142, -1.7596, 0.9999, -1.3614]
+    right_arm_positions: [-0.3809, 0.9665, -0.8518, -2.3582, 0.8914, -1.0037, 0.3983]
+    arrival_timeout: 30.0
+    joint_tolerance: 0.05
+
+# 左臂拿料,切右臂拿料(右臂准备姿态）)
+  right_pose_1:
+    # joint.movej_to_config
+    body_positions: [-0.465, -0.9699, -0.494, 0.0]
+    left_arm_positions: [-1.7757, 0.8048, 2.4085, -1.3142, -1.7596, 0.9999, -1.3614]
+    right_arm_positions: [2.1406, 0.7002, -1.7091, -1.6101, 0.4835, -1.0123, 1.3604]
+    arrival_timeout: 30.0
+    joint_tolerance: 0.05
+  #右臂拿料
+  right_pick_1:
+    arm: right
+    motion_frame_id: arm_base
+    arm_movel_duration: 2.0
+    object_prim_path: /World/scene/banjian_3/banjian_3/banjian_3
+    object_position_offset: [0.05, -0.02, 0]
+    ee_base_orientation: [-0.017496, 0.7643, 0.6429, -0.047212]
+    
+  #左臂松手放料
+  left_place_1:
+    object_prim_path: /World/scene/banjian_3/banjian_3/banjian_3
+    arm: left
+    motion_frame_id: arm_base
+    # position: [0.3785, 0.1275, -0.188]
+    # orientation: [0.4957, 0.1496,0.045, 0.8542]
+    ee_base_orientation: [0.4957, 0.1496,0.045, 0.8542]
+    prepare_offset: [0.0, -0.5, 0]
+    gripper: 1.0
+
+  # # 左臂回home前姿态
+  # left_pose_6:
+  #   # joint.movej_to_config
+  #   body_positions: [-0.465, -0.9699, -0.494, 0.0]
+  #   left_arm_positions: [-1.9836, 0.5997, 2.6811, -1.2663, -1.8949, -0.9612, -1.2993]
+  #   right_arm_positions: [2.2836, 0.7462, -2.0672, -1.7319, 0.3931, -1.9419, 1.1849]
+  #   arrival_timeout: 30.0
+  #   joint_tolerance: 0.05
+
+   # 左臂回home
+  left_pose_7:
+    # joint.movej_to_config
+    body_positions: [-0.465, -0.9699, -0.494, 0.0]
+    left_arm_positions: [-1.7757, 0.8048, 2.4085, -1.3142, -1.7596, 0.9999, -1.3614]
+    right_arm_positions: [2.1406, 0.7002, -1.7091, -1.6101, 0.4835, -1.0123, 1.3604]
+    arrival_timeout: 30.0
+    joint_tolerance: 0.05
+
+
+  # 右臂回放件姿态
+  right_pose_2:
+    # joint.movej_to_config
+    body_positions: [-0.465, -0.9699, -0.494, 0.0]
+    left_arm_positions: [0.3810, 0.9665, 0.8517, -2.3582, -0.8916, -1.0037, -0.3983]
+    right_arm_positions: [2.1650, 1.4793, -2.1601, -1.3531, -0.1953, -0.1452, -0.6092]
+    arrival_timeout: 30.0
+    joint_tolerance: 0.05
+
+
+#去上料位置
+  nav_to_carry_3:
+      # 目标物体在场景中的路径，用于导航定位和接近目标
+      object_prim_path: /World/scene/banjian_1/banjian_1/banjian_1
+      # 从当前机器人姿态到目标前方的 X 轴偏移，正值表示目标前方 0.95m
+      approach_offset_x: 0.6
+      # 从当前机器人姿态到目标侧面的 Y 轴偏移，控制靠近的横向位置
+      approach_offset_y: 0.6
+      # 导航到目标后朝向角，弧度制
+      yaw: 1.57
+      # 目标位姿所在坐标系，通常使用 map 表示全局坐标系
+      frame_id: map
+      # 导航到目标的超时时间，单位秒
+      timeout: 60.0
+  # 放件位置
+  right_pose_3:
+    # joint.movej_to_config
+    body_positions: [-0.465, -0.9699, -0.494, 0.0]
+    left_arm_positions: [0.3810, 0.9665, 0.8517, -2.3582, -0.8916, -1.0037, -0.3983]
+    right_arm_positions: [2.4340, 1.6397, -2.055, -0.4644, -0.2928, -0.7193, -0.6747]
+    arrival_timeout: 30.0
+    joint_tolerance: 0.05
+
+task_queue:
+  # 1. 回到home姿态
+  - skill: joint.movej_to_config
+    id: home_pose
+
+  # 2. 底盘运动
+  - skill: nav.navigate_to_object
+    id: nav_to_carry_1
+
+
+  # 3. 左臂抓取板件3（预备姿态）
+  - skill: joint.movej_to_config
+    id: left_pose_1_1
+  
+  # 5. 左臂抓取板件3（预备姿态）
+  - skill: joint.movej_to_config
+    id: left_pose_1
+
+  # #拿件测试
+  # - skill: single_arm.move_relative
+  #   id: left_pick_1
+  # 6. 并行，左臂取出板件3
+  # - skill: joint.movej_to_config
+  - parallel:
+      # 左臂拿住板件3
+      - skill: joint.movej_to_config
+        id: left_pose_2
+      # 左臂取出板件3
+      - skill: joint.movej_to_config
+        id: left_pose_3
+        start_delay_s: 10.0
+
+  # 7. 底盘运动
+  - skill: nav.navigate_to_object
+    id: nav_to_carry_2
+
+  # 8. 左臂拿料,切右手准备姿态
+  - skill: joint.movej_to_config
+    id: left_pose_4
+
+    # 9. 左臂拿料,切右手拿料
+  - parallel:
+      # 左臂拿住板件3,切右手姿态
+      - skill: joint.movej_to_config
+        id: left_pose_5
+      # 右臂拿板件准备姿态
+      - skill: joint.movej_to_config
+        id: right_pose_1
+        start_delay_s: 5.0
+
+
+
+
+#10. 右臂拿料,左臂松手(手动松手)
+  - skill: single_arm.pick
+    id: right_pick_1
+  
+
+  # # 右臂放板件准备姿态
+  # - skill: joint.movej_to_config
+  #   id: left_pose_6
+
+
+  # 右臂放板件准备姿态
+  - skill: joint.movej_to_config
+    id: right_pose_1
+
+  # 左臂回home
+  - skill: joint.movej_to_config
+    id: left_pose_6
+
+  - skill: joint.movej_to_config
+    id: right_pose_2
+      
+    
+    # 12. 底盘运动
+  - skill: nav.navigate_to_object
+    id: nav_to_carry_3
+
+    # 13. 放件位置
+  - skill: joint.movej_to_config
+    id: right_pose_3
+
+
+ 
+
+scene_presets:
+  env_1: {}
+
+record:
+  base_record_overrides:
+    task_name: pick_place
+    fps: 30
+    camera_info_timeout: 10.0
+    enable_keypoint_pcd: false
+    include_depth_feature: false
+    image_writer_processes: 0
+    image_writer_threads: 8
+    video_encoding_batch_size: 5
+  profiles:
+    - key: default
+      label: Default
+      overrides: {}
+    - key: fast
+      label: Fast Encode Queue
+      overrides:
+        image_writer_threads: 12
+        video_encoding_batch_size: 10

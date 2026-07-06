@@ -1,0 +1,108 @@
+{
+  "records": [
+    {
+      "task_key": "Loading And Unloading",
+      "scene": "env_1",
+      "block_key": "nav_to_carry_1",
+      "skill": "nav.navigate_to_object",
+      "block_index": 1,
+      "parallel_index": null,
+      "arm_side": "none",
+      "object_role": "nav_target",
+      "object_prim_path": "/World/scene/banjian_3/banjian_3",
+      "include_orientation": true,
+      "frame_id": "map",
+      "pose": {
+        "position": {
+          "x": -1.161104679107666,
+          "y": -1.4020133018493652,
+          "z": 0.850627064704895
+        },
+        "orientation": {
+          "x": -1.2101616597703924e-08,
+          "y": 0.7071067690849304,
+          "z": 0.7071067690849304,
+          "w": -1.2101616597703924e-08
+        }
+      }
+    },
+    {
+      "task_key": "Loading And Unloading",
+      "scene": "env_1",
+      "block_key": "nav_to_carry_2",
+      "skill": "nav.navigate_to_object",
+      "block_index": 5,
+      "parallel_index": null,
+      "arm_side": "none",
+      "object_role": "nav_target",
+      "object_prim_path": "/World/scene/bg_1/bg/A10_6212420_6211320_翻转料架_/____58_18/Mesh_2314",
+      "include_orientation": true,
+      "frame_id": "map",
+      "pose": {
+        "position": {
+          "x": -1.161104679107666,
+          "y": -1.2520127296447754,
+          "z": 0.850627064704895
+        },
+        "orientation": {
+          "x": -1.2101617485882343e-08,
+          "y": 0.7071067690849304,
+          "z": 0.7071067690849304,
+          "w": -1.2101617485882343e-08
+        }
+      }
+    },
+    {
+      "task_key": "Loading And Unloading",
+      "scene": "env_1",
+      "block_key": "right_pick_1",
+      "skill": "single_arm.pick",
+      "block_index": 8,
+      "parallel_index": 0,
+      "arm_side": "left",
+      "object_role": "pick_target",
+      "object_prim_path": "/World/scene/banjian_3/banjian_3/banjian_3",
+      "include_orientation": true,
+      "frame_id": "base_link",
+      "pose": {
+        "position": {
+          "x": 0.5003002775800054,
+          "y": 0.016649092701331542,
+          "z": 1.3072764025799386
+        },
+        "orientation": {
+          "x": 0.07525308125092338,
+          "y": -0.6340275304055111,
+          "z": 0.1012847623240186,
+          "w": 0.7629465652135135
+        }
+      }
+    },
+    {
+      "task_key": "Loading And Unloading",
+      "scene": "env_1",
+      "block_key": "left_place_1",
+      "skill": "single_arm.move_to_object",
+      "block_index": 8,
+      "parallel_index": 1,
+      "arm_side": "right",
+      "object_role": "move_to_object_target",
+      "object_prim_path": "/World/scene/banjian_3/banjian_3/banjian_3",
+      "include_orientation": true,
+      "frame_id": "base_link",
+      "pose": {
+        "position": {
+          "x": 0.49283484581544285,
+          "y": 0.014012093910417776,
+          "z": 1.313180314475293
+        },
+        "orientation": {
+          "x": 0.027894880642567656,
+          "y": -0.6342834469749901,
+          "z": 0.07956239710293861,
+          "w": 0.7684895636862588
+        }
+      }
+    }
+  ]
+}
